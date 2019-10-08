@@ -1,59 +1,90 @@
 from django.shortcuts import render, redirect
 from .models import Restaurant
-from .forms import RestaurantForm
+from .forms import RestaurantForm, SignupForm, SigninForm
+from django.contrib.auth import login, authenticate, logout
 
 def signup(request):
-    
-    return render(request, 'signup.html', context)
+	form = SignupForm()
+	if request.method == "POST":
+		form = SignupForm(request.POST)
+		if form.is_valid():
+
+			user = form.save(commit=False)
+			user.set_password(user.password)
+			user.save()
+			login(request, user)
+			return redirect("restaurant-list")
+
+	context = {
+		"form": form
+	}
+
+	return render(request, 'signup.html', context)
 
 def signin(request):
-    
-    return 
+	form = SigninForm()
+	if request.method == "POST":
+		form = SigninForm(request.POST)
+		if form.is_valid():
+
+			username = form.cleaned_data["username"]
+			pasword = form.cleaned_data["password"]
+
+			auth_user = authenticate(username = username, password=pasword)
+			if auth_user is not None:
+				login(request, auth_user)
+				return redirect("restaurant-list")
+	context = {
+		"form": form
+	}
+
+	return render(request, 'signin.html', context)
+
 
 def signout(request):
-    
-    return 
+	logout(request)
+	return redirect('restaurant-list')
 
 def restaurant_list(request):
-    context = {
-        "restaurants":Restaurant.objects.all()
-    }
-    return render(request, 'list.html', context)
+	context = {
+		"restaurants":Restaurant.objects.all()
+	}
+	return render(request, 'list.html', context)
 
 
 def restaurant_detail(request, restaurant_id):
-    context = {
-        "restaurant": Restaurant.objects.get(id=restaurant_id)
-    }
-    return render(request, 'detail.html', context)
+	context = {
+		"restaurant": Restaurant.objects.get(id=restaurant_id)
+	}
+	return render(request, 'detail.html', context)
 
 def restaurant_create(request):
-    form = RestaurantForm()
-    if request.method == "POST":
-        form = RestaurantForm(request.POST, request.FILES)
-        if form.is_valid():
-            form.save()
-            return redirect('restaurant-list')
-    context = {
-        "form":form,
-    }
-    return render(request, 'create.html', context)
+	form = RestaurantForm()
+	if request.method == "POST":
+		form = RestaurantForm(request.POST, request.FILES)
+		if form.is_valid():
+			form.save()
+			return redirect('restaurant-list')
+	context = {
+		"form":form,
+	}
+	return render(request, 'create.html', context)
 
 def restaurant_update(request, restaurant_id):
-    restaurant_obj = Restaurant.objects.get(id=restaurant_id)
-    form = RestaurantForm(instance=restaurant_obj)
-    if request.method == "POST":
-        form = RestaurantForm(request.POST, request.FILES, instance=restaurant_obj)
-        if form.is_valid():
-            form.save()
-            return redirect('restaurant-list')
-    context = {
-        "restaurant_obj": restaurant_obj,
-        "form":form,
-    }
-    return render(request, 'update.html', context)
+	restaurant_obj = Restaurant.objects.get(id=restaurant_id)
+	form = RestaurantForm(instance=restaurant_obj)
+	if request.method == "POST":
+		form = RestaurantForm(request.POST, request.FILES, instance=restaurant_obj)
+		if form.is_valid():
+			form.save()
+			return redirect('restaurant-list')
+	context = {
+		"restaurant_obj": restaurant_obj,
+		"form":form,
+	}
+	return render(request, 'update.html', context)
 
 def restaurant_delete(request, restaurant_id):
-    restaurant_obj = Restaurant.objects.get(id=restaurant_id)
-    restaurant_obj.delete()
-    return redirect('restaurant-list')
+	restaurant_obj = Restaurant.objects.get(id=restaurant_id)
+	restaurant_obj.delete()
+	return redirect('restaurant-list')
